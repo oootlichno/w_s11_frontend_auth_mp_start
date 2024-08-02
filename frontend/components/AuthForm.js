@@ -1,34 +1,64 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
+  const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const toggleFormMode = () => {
-    setIsLogin(!isLogin)
-    setError('')
-    setMessage('')
-  }
+    setIsLogin(!isLogin);
+    setError('');
+    setMessage('');
+  };
+
   const handleUsernameChange = (event) => {
-    setUsername(event.target.value)
-  }
+    setUsername(event.target.value);
+  };
+
   const handlePasswordChange = (event) => {
-    setPassword(event.target.value)
-  }
+    setPassword(event.target.value);
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError('');
+    try {
+      let response;
+      if (isLogin) {
+        response = await axios.post('http://localhost:3003/api/auth/login', {
+          username,
+          password
+        });
+        localStorage.setItem('token', response.data.token);
+        navigate('/stars');
+      } else {
+        response = await axios.post('http://localhost:3003/api/auth/register', {
+          username,
+          password
+        });
+        setMessage(response.data.message);
+      }
+    } catch (err) {
+      setError('Something went wrong: ' + (err.response ? err.response.data.message : err.message));
+    }
+  };
 
   return (
     <div className="container">
       <div aria-live="polite">{message}</div>
       <div aria-live="assertive" style={{ color: 'red' }}>{error}</div>
-      <h3>{isLogin ? 'Login' : 'Register'}
+      <h3>
+        {isLogin ? 'Login' : 'Register'}
         <button onClick={toggleFormMode}>
           Switch to {isLogin ? 'Register' : 'Login'}
         </button>
       </h3>
-      <form>
+      <form onSubmit={submit}>
         <div>
           <label htmlFor="username">Username:</label>
           <input
@@ -54,5 +84,5 @@ export default function AuthForm() {
         <button type="submit">{isLogin ? 'Login' : 'Register'}</button>
       </form>
     </div>
-  )
+  );
 }
